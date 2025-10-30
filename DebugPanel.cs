@@ -95,6 +95,11 @@ public class MultiplayerDebugPanel : MonoBehaviour
         
         GUILayout.Space(10);
         
+        // 트래픽 최적화 옵션
+        DrawTrafficOptimization();
+        
+        GUILayout.Space(10);
+        
         // 에러 로그
         DrawErrorLog();
         
@@ -223,6 +228,65 @@ public class MultiplayerDebugPanel : MonoBehaviour
         {
             var timeDiff = _debugInfo.ServerTimeDifference;
             GUILayout.Label($"서버 시간 차이: {timeDiff * 1000:F1}ms");
+        }
+    }
+    
+    /// <summary>
+    /// 트래픽 최적화 옵션 그리기
+    /// </summary>
+    private void DrawTrafficOptimization()
+    {
+        GUILayout.Label("=== 트래픽 최적화 옵션 ===", GUI.skin.box);
+        
+        var batchSystem = BatchUpdateSystem.Instance;
+        var zoneBroadcast = ZoneBasedBroadcast.Instance;
+        var trafficOpt = TrafficOptimization.Instance;
+        
+        if (batchSystem == null && zoneBroadcast == null && trafficOpt == null)
+        {
+            GUILayout.Label("최적화 시스템 없음");
+            return;
+        }
+        
+        // 구역 기반 브로드캐스트
+        if (zoneBroadcast != null)
+        {
+            var useAreaBroadcast = GUILayout.Toggle(zoneBroadcast.enabled, "구역 기반 브로드캐스트 사용");
+            if (useAreaBroadcast != zoneBroadcast.enabled)
+            {
+                zoneBroadcast.enabled = useAreaBroadcast;
+                Debug.Log($"[DebugPanel] Area Broadcast: {useAreaBroadcast}");
+            }
+        }
+        
+        // 배치 업데이트
+        if (batchSystem != null)
+        {
+            var useBatchUpdate = GUILayout.Toggle(batchSystem.enabled, "배치 업데이트 사용");
+            if (useBatchUpdate != batchSystem.enabled)
+            {
+                batchSystem.enabled = useBatchUpdate;
+                Debug.Log($"[DebugPanel] Batch Update: {useBatchUpdate}");
+            }
+        }
+        
+        // 애니메이션 파라미터 전송
+        if (trafficOpt != null)
+        {
+            var sendAnimParams = GUILayout.Toggle(trafficOpt.sendAnimParams, "애니메이션 파라미터 전송");
+            if (sendAnimParams != trafficOpt.sendAnimParams)
+            {
+                trafficOpt.sendAnimParams = sendAnimParams;
+                Debug.Log($"[DebugPanel] Send Anim Params: {sendAnimParams}");
+            }
+            
+            // 루팅 이벤트 전송
+            var sendLootEvents = GUILayout.Toggle(trafficOpt.sendLootEvents, "루팅 이벤트 전송");
+            if (sendLootEvents != trafficOpt.sendLootEvents)
+            {
+                trafficOpt.sendLootEvents = sendLootEvents;
+                Debug.Log($"[DebugPanel] Send Loot Events: {sendLootEvents}");
+            }
         }
     }
     

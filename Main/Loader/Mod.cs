@@ -1558,14 +1558,17 @@ public class ModBehaviourF : MonoBehaviour
             
             // ===== 개선 사항: 새 Opcode 처리 =====
             case Op.PLAYER_SNAPSHOT:
-                if (!IsServer && SnapshotSync.Instance != null)
+                if (!IsServer)
                 {
                     var playerId = reader.GetString();
+                    var sequence = reader.GetUInt();
+                    var serverTime = reader.GetDouble();
                     var position = reader.GetV3cm();
                     var rotation = reader.GetQuaternion();
                     var velocity = reader.GetV3cm();
-                    var timestamp = reader.GetDouble();
-                    SnapshotSync.Instance.ReceiveSnapshot(playerId, position, rotation, velocity, timestamp);
+                    
+                    // RemoteDuckController를 통한 스냅샷 수신
+                    SnapshotSyncManager.ReceiveSnapshot(playerId, position, rotation, velocity, sequence, serverTime);
                 }
                 break;
             

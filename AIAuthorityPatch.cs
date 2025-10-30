@@ -18,7 +18,26 @@ internal static class Patch_AIUpdate_HostOnly
         // 클라이언트에서는 AI Update를 완전히 차단
         if (!mod.IsServer)
         {
+            // AI 컴포넌트 비활성화 (성능 최적화)
+            if (__instance != null)
+            {
+                __instance.enabled = false;
+                
+                // NavMeshAgent 같은 컴포넌트도 비활성화
+                var agent = __instance.GetComponent<UnityEngine.AI.NavMeshAgent>();
+                if (agent != null) agent.enabled = false;
+            }
+            
             return false; // AI 업데이트 차단
+        }
+        
+        // 호스트에서는 AI 컴포넌트 활성화 보장
+        if (__instance != null && !__instance.enabled)
+        {
+            __instance.enabled = true;
+            
+            var agent = __instance.GetComponent<UnityEngine.AI.NavMeshAgent>();
+            if (agent != null && !agent.enabled) agent.enabled = true;
         }
         
         return true; // 호스트만 AI 업데이트 실행

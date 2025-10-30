@@ -29,6 +29,9 @@ public class SnapshotSync : MonoBehaviour
     // 이전 상태 저장 (델타 압축용)
     private readonly Dictionary<string, PlayerSnapshotState> _lastStates = new();
     
+    // 시퀀스 번호 (플레이어별로 관리)
+    private readonly Dictionary<string, uint> _sequences = new();
+    
     private NetService Service => NetService.Instance;
     private bool IsServer => Service != null && Service.IsServer;
     private NetManager netManager => Service?.netManager;
@@ -102,15 +105,24 @@ public class SnapshotSync : MonoBehaviour
             return; // 변화 없으면 전송 안 함
         }
         
+        // 시퀀스 번호 증가
+        if (!_sequences.TryGetValue(playerId, out var sequence))
+        {
+            sequence = 0;
+        }
+        sequence++;
+        _sequences[playerId] = sequence;
+        
         // 스냅샷 패킷 구성
         writer.Reset();
-        writer.Put((byte)Op.PLAYER_SNAPSHOT); // 새로운 Opcode 필요
+        writer.Put((byte)Op.PLAYER_SNAPSHOT);
         
         writer.Put(playerId);
+        writer.Put(sequence); // 시퀀스 번호 추가
+        writer.Put((double)Time.unscaledTimeAsDouble); // 서버 시간 추가
         writer.PutV3cm(position);
         writer.PutQuaternion(rotation);
         writer.PutV3cm(velocity);
-        writer.Put((double)Time.unscaledTimeAsDouble);
         
         // 모든 클라이언트에 브로드캐스트
         netManager.SendToAll(writer, DeliveryMethod.Unreliable);
@@ -139,15 +151,24 @@ public class SnapshotSync : MonoBehaviour
             return; // 변화 없으면 전송 안 함
         }
         
+        // 시퀀스 번호 증가
+        if (!_sequences.TryGetValue(playerId, out var sequence))
+        {
+            sequence = 0;
+        }
+        sequence++;
+        _sequences[playerId] = sequence;
+        
         // 스냅샷 패킷 구성
         writer.Reset();
         writer.Put((byte)Op.PLAYER_SNAPSHOT);
         
         writer.Put(playerId);
+        writer.Put(sequence); // 시퀀스 번호 추가
+        writer.Put((double)Time.unscaledTimeAsDouble); // 서버 시간 추가
         writer.PutV3cm(position);
         writer.PutQuaternion(rotation);
         writer.PutV3cm(velocity);
-        writer.Put((double)Time.unscaledTimeAsDouble);
         
         // 해당 클라이언트에게 전송
         peer.Send(writer, DeliveryMethod.Unreliable);

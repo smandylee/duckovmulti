@@ -7,6 +7,27 @@ using LiteNetLib.Utils;
 namespace EscapeFromDuckovCoopMod;
 
 /// <summary>
+/// 트래픽 최적화 메인 클래스
+/// 디버그 패널에서 옵션 토글 가능
+/// </summary>
+public class TrafficOptimization : MonoBehaviour
+{
+    public static TrafficOptimization Instance;
+    
+    [Header("트래픽 최적화 옵션")]
+    [Tooltip("애니메이션 파라미터 전송 여부")]
+    public bool sendAnimParams = true;
+    
+    [Tooltip("루팅 이벤트 전송 여부")]
+    public bool sendLootEvents = true;
+    
+    private void Awake()
+    {
+        Instance = this;
+    }
+}
+
+/// <summary>
 /// 배치 업데이트 시스템 - 정적 오브젝트 변경 묶어서 전송
 /// </summary>
 public class BatchUpdateSystem : MonoBehaviour
@@ -84,7 +105,7 @@ public class BatchUpdateSystem : MonoBehaviour
             var items = group.ToList();
             
             writer.Reset();
-            writer.Put((byte)OpExtensions.BATCH_UPDATE);
+            writer.Put((byte)Op.BATCH_UPDATE);
             writer.Put((byte)group.Key);
             writer.Put(items.Count);
             
@@ -245,7 +266,7 @@ public class ZoneBasedBroadcast : MonoBehaviour
     {
         var x = Mathf.FloorToInt(position.x / ZoneSize);
         var z = Mathf.FloorToInt(position.z / ZoneSize);
-        return new Vector2Int(x, z).GetHashCode();
+        return x * 1000 + z; // 간단한 해시
     }
     
     /// <summary>
@@ -253,7 +274,7 @@ public class ZoneBasedBroadcast : MonoBehaviour
     /// </summary>
     public bool HasPlayersInZone(int zoneId)
     {
-        return _playerZones.Values.Contains(zoneId);
+        return _playerZones.ContainsValue(zoneId);
     }
     
     /// <summary>
@@ -380,8 +401,7 @@ public class ClientPredictedWeaponSystem : MonoBehaviour
     /// </summary>
     private void PlayHitEffect(Vector3 hitPoint)
     {
-        // 피격 이펙트 재생
-        // 실제 구현은 게임의 이펙트 시스템에 따라 다름
+        // 피격 이펙트 재생 로직
     }
     
     /// <summary>
@@ -396,25 +416,3 @@ public class ClientPredictedWeaponSystem : MonoBehaviour
         public double Timestamp;
     }
 }
-
-/// <summary>
-/// 구역 기반 브로드캐스트 적용 패치
-/// </summary>
-[HarmonyPatch(typeof(AIHandle), "Server_BroadcastAiTransforms")]
-internal static class Patch_AI_Broadcast_ZoneBased
-{
-    private static bool Prefix()
-    {
-        var zoneSystem = ZoneBasedBroadcast.Instance;
-        if (zoneSystem == null) return true; // 원래대로
-        
-        // 호스트만 체크
-        var mod = ModBehaviourF.Instance;
-        if (mod == null || !mod.IsServer) return true;
-        
-        // 구역 기반 브로드캐스트는 AIHandle 내부에서 처리
-        // 실제 구현은 AIHandle 수정 필요
-        return true;
-    }
-}
-
