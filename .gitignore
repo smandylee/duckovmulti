@@ -1,0 +1,34 @@
+## Visual Studio build results
+[Ll]og/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.dll
+*.pdb
+*.cache
+*.tmp
+
+## Visual Studio cache
+.vs/
+.vscode/
+
+## Build results
+**/bin/**
+**/obj/**
+**/Properties/launchSettings.json
+
+## NuGet
+*.nupkg
+packages/
+
+## User-specific files
+*.suo
+*.user
+*.userosscache
+
+## Temporary files
+*.tmp
+*.log
+*~
+
